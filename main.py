@@ -1,28 +1,26 @@
 from datetime import datetime
 
 class User:
-    def __init__(self, name, email, balance=0):
+    def __init__(self, name, email, payment_info):
         self.name = name
         self.email = email
-        self.balance = balance
-        self.trip_history = []
+        self.payment_info = payment_info
+        self.history = []
 
-    def add_funds(self, amount):
-        self.balance += amount
-
-    def deduct_funds(self, amount):
-        if self.balance >= amount:
-            self.balance -= amount
-            return True
-        else:
-            return False
+    def make_order(self, start_location, end_location):
+        order = Order(start_location, end_location, self)
+        return order
 
 class Driver:
-    def __init__(self, name, vehicle):
+    def __init__(self, name, vehicle, rating):
         self.name = name
         self.vehicle = vehicle
-        self.rating = 0
-        self.trip_history = []
+        self.rating = rating
+        self.history = []
+
+    def accept_order(self, order):
+        order.assign_driver(self)
+        return "Замовлення прийнято."
 
 class Ride:
     def __init__(self, start_location, end_location, cost, start_time, end_time, user, driver):
@@ -35,11 +33,21 @@ class Ride:
         self.driver = driver
 
 class Order:
-    def __init__(self, start_location, end_location, order_time, status):
+    def __init__(self, start_location, end_location, user):
         self.start_location = start_location
         self.end_location = end_location
-        self.order_time = order_time
-        self.status = status
+        self.user = user
+        self.status = "В очікуванні"
+        self.time = datetime.now()
+
+    def assign_driver(self, driver):
+        self.driver = driver
+        self.status = "Призначений"
+
+    def complete(self, cost):
+        self.cost = cost
+        self.status = "Виконано"
+        self.time_completed = datetime.now()
 
     def validate_datetime(self, datetime_str):
         try:
@@ -49,33 +57,36 @@ class Order:
             return False
 
     def validate_payment(self, user):
-        return user.balance >= self.cost
+        if user.payment_info:
+            return True
+        else:
+            return False
 
-user1 = User("Винник Вадим", "vadym@example.com", balance=300)
-user2 = User("Аня Шкатуляк", "anya@example.com", balance=100)
-user3 = User("Сем Вінчестер", "sem@example.com", balance=30)
+def main():
+    print("Ласкаво просимо до системи замовлення таксі!")
+    user_name = input("Введіть своє ім'я: ")
+    user_email = input("Введіть свій email: ")
+    user_payment_info = input("Введіть свою платіжну інформацію: ")
 
-driver1 = Driver("Ахмад", "Toyota Camry")
-driver2 = Driver("Мухамед", "Honda Accord")
-driver3 = Driver("Мизайло", "Ford Fusion")
+    user = User(user_name, user_email, user_payment_info)
 
-order1 = Order("Довга ", "Коновальця", "2024-04-08 9:00:00", "в очікуванні")
-order2 = Order("Берегова", "Мазепи", "2024-04-08 13:30:00", "підтверджено")
-order3 = Order("Незалежності", "Чорновола", "2024-04-08 14:45:00", "підтверджено")
+    while True:
+        print("\n1. Зробіть нове замовлення таксі")
+        print("2. Вихід")
+        choice = input("Введіть свій вибір: ")
 
-print("Доступні водії:")
-for driver in [driver1, driver2, driver3]:
-    print(f"Ім'я: {driver.name}, Автомобіль: {driver.vehicle}")
+        if choice == "1":
+            start_location = input("Введіть місце початку: ")
+            end_location = input("Введіть кінцеве місце: ")
 
-print("\nКористувачі, які можуть викликати таксі:")
-for user in [user1, user2, user3]:
-    print(f"Ім'я: {user.name}, Email: {user.email}, Баланс: {user.balance}")
+            order = user.make_order(start_location, end_location)
+            print("Замовлення таксі виконано успішно.")
+            print("Статус:", order.status)
+        elif choice == "2":
+            print("Дякуємо за використання системи замовлення таксі!")
+            break
+        else:
+            print("Невірний вибір. Будь ласка спробуйте ще раз.")
 
-print("\nІнформація про замовлення:")
-for idx, order in enumerate([order1, order2, order3], start=1):
-    print(f"Замовлення #{idx}:")
-    print(f"Місце початку: {order.start_location}")
-    print(f"Місце призначення: {order.end_location}")
-    print(f"Час замовлення: {order.order_time}")
-    print(f"Статус: {order.status}")
-    print()
+if __name__ == "__main__":
+    main()
